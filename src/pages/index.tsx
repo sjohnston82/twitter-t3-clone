@@ -5,18 +5,65 @@ import {
   UserButton,
   useUser,
 } from "@clerk/nextjs";
+import { log } from "console";
 import { type NextPage } from "next";
 import Head from "next/head";
+import Image from "next/image";
 import Link from "next/link";
 import { BiLoader } from "react-icons/bi";
 
-import { api } from "~/utils/api";
-
+import { type RouterOutputs, api } from "~/utils/api";
+import dayjs from "dayjs";
+import relativeTime from 'dayjs/plugin/relativeTime';
+dayjs.extend(relativeTime)
 
 const CreatePostWizard = () => {
   const { user } = useUser();
-}
 
+  if (!user) return null;
+
+  return (
+    <div className="flex w-full space-x-4">
+      <Image
+        src={user.profileImageUrl}
+        alt={user.fullName ?? ""}
+        width={56}
+        height={56}
+        className="rounded-full"
+      />
+      <input
+        type="text"
+        placeholder="Type some emojis here!"
+        className="grow rounded-xl bg-transparent p-3 focus:outline-none"
+      />
+    </div>
+  );
+};
+
+type PostWithUser = RouterOutputs["posts"]["getAll"][0];
+
+const PostView = ({ post, author }: PostWithUser) => {
+  if (!post) return null;
+  return (
+    <div className="flex items-center space-x-4 border-b border-slate-400 p-4 last:border-none">
+      {author && (
+        <Image
+          src={author.profilePicture}
+          alt={author.username ?? ""}
+          width={56}
+          height={56}
+          className="rounded-full"
+        />
+      )}
+      <div className="flex flex-col">
+        <div className="text-slate-300">
+          <span>{`@${author.username}`}</span> ∙ <span className="text-sm">{dayjs(post.createdAt).fromNow()}</span>
+        </div>
+        <div className="text-2xl">{post.content}</div>
+      </div>
+    </div>
+  );
+};
 
 const Home: NextPage = () => {
   const user = useUser();
@@ -47,21 +94,12 @@ const Home: NextPage = () => {
                 <SignInButton />
               </div>
             )}
-            {!!user.isSignedIn && (
-              <div className="">
-                <SignOutButton />
-              </div>
-            )}
+            {user.isSignedIn && <CreatePostWizard />}
             {/* <UserButton /> */}
           </div>
           <div className="flex flex-col">
-            {data?.map((post) => (
-              <div
-                key={post.id}
-                className="border-b border-slate-400 p-8 last:border-none"
-              >
-                {post.content}
-              </div>
+            {data?.map((fullPost) => (
+              <PostView {...fullPost} key={fullPost.post.id} />
             ))}
           </div>
         </div>
