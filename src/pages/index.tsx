@@ -11,6 +11,7 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { BiLoader } from "react-icons/bi";
+import { useState } from "react";
 
 import { type RouterOutputs, api } from "~/utils/api";
 import dayjs from "dayjs";
@@ -20,8 +21,18 @@ dayjs.extend(relativeTime);
 
 const CreatePostWizard = () => {
   const { user } = useUser();
+  const [formInput, setFormInput] = useState("");
 
   if (!user) return null;
+
+  const createPostRoute = api.useContext().posts;
+
+  const { mutate, isLoading: isPosting } = api.posts.createPost.useMutation({
+    onSuccess: () => {
+      setFormInput("");
+      void createPostRoute.invalidate();
+    },
+  });
 
   return (
     <div className="flex w-full space-x-4">
@@ -32,11 +43,19 @@ const CreatePostWizard = () => {
         height={56}
         className="rounded-full"
       />
-      <input
-        type="text"
-        placeholder="Type some emojis here!"
-        className="grow rounded-xl bg-transparent p-3 focus:outline-none"
-      />
+      <div className="">
+        <input
+          type="text"
+          placeholder="Type some emojis here!"
+          className="grow rounded-xl bg-transparent p-3 focus:outline-none"
+          value={formInput}
+          onChange={(e) => setFormInput(e.target.value)}
+          disabled={isPosting}
+        />
+        {formInput.length > 0 && (
+          <button onClick={() => mutate({ content: formInput })}>Post</button>
+        )}
+      </div>
     </div>
   );
 };
