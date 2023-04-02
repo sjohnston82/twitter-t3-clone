@@ -14,8 +14,9 @@ import { BiLoader } from "react-icons/bi";
 
 import { type RouterOutputs, api } from "~/utils/api";
 import dayjs from "dayjs";
-import relativeTime from 'dayjs/plugin/relativeTime';
-dayjs.extend(relativeTime)
+import relativeTime from "dayjs/plugin/relativeTime";
+import LoadingSpinner from "~/components/LoadingSpinner";
+dayjs.extend(relativeTime);
 
 const CreatePostWizard = () => {
   const { user } = useUser();
@@ -57,7 +58,8 @@ const PostView = ({ post, author }: PostWithUser) => {
       )}
       <div className="flex flex-col">
         <div className="text-slate-300">
-          <span>{`@${author.username}`}</span> ∙ <span className="text-sm">{dayjs(post.createdAt).fromNow()}</span>
+          <span>{`@${author.username}`}</span> ∙{" "}
+          <span className="text-sm">{dayjs(post.createdAt).fromNow()}</span>
         </div>
         <div className="text-2xl">{post.content}</div>
       </div>
@@ -65,19 +67,36 @@ const PostView = ({ post, author }: PostWithUser) => {
   );
 };
 
-const Home: NextPage = () => {
-  const user = useUser();
-  const { data, isLoading } = api.posts.getAll.useQuery();
+const Feed = () => {
+  const { data, isLoading: postsLoading } = api.posts.getAll.useQuery();
 
-  if (isLoading)
+  if (postsLoading)
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center">
-        <h1>Loading...</h1>
-        <BiLoader className="animate-spin text-7xl" />
+        <h1 className="text-xl">Loading...</h1>
+        {/* <BiLoader className="animate-spin text-7xl" /> */}
+        <LoadingSpinner size={64} />
       </div>
     );
 
   if (!data) return <div className="">Something went wrong!</div>;
+
+  return (
+    <div className="flex flex-col">
+      {data?.map((fullPost) => (
+        <PostView {...fullPost} key={fullPost.post.id} />
+      ))}
+    </div>
+  );
+};
+
+const Home: NextPage = () => {
+  const { isLoaded: userLoaded, isSignedIn } = useUser();
+
+  // start fetching asap, if you fetch multiple times it will just used cached data
+  api.posts.getAll.useQuery();
+
+  if (!userLoaded) return <div />;
 
   return (
     <>
@@ -89,19 +108,14 @@ const Home: NextPage = () => {
       <main className="flex h-screen justify-center">
         <div className="h-full w-full border-x border-slate-400 md:max-w-2xl">
           <div className="flex border-b border-slate-400 p-4">
-            {!user.isSignedIn && (
+            {!isSignedIn && (
               <div className="flex w-full items-center justify-center ">
                 <SignInButton />
               </div>
             )}
-            {user.isSignedIn && <CreatePostWizard />}
-            {/* <UserButton /> */}
+            {isSignedIn && <CreatePostWizard />}
           </div>
-          <div className="flex flex-col">
-            {data?.map((fullPost) => (
-              <PostView {...fullPost} key={fullPost.post.id} />
-            ))}
-          </div>
+          <Feed />
         </div>
       </main>
     </>
