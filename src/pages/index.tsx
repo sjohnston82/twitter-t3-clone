@@ -17,6 +17,8 @@ import { type RouterOutputs, api } from "~/utils/api";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import LoadingSpinner from "~/components/LoadingSpinner";
+import { ZodError } from "zod";
+import { toast } from "react-hot-toast";
 dayjs.extend(relativeTime);
 
 const CreatePostWizard = () => {
@@ -32,6 +34,11 @@ const CreatePostWizard = () => {
       setFormInput("");
       void createPostRoute.invalidate();
     },
+    onError: () => {
+      if (ZodError) {
+        toast.error("You can only post emojis!");
+      }
+    },
   });
 
   return (
@@ -43,7 +50,7 @@ const CreatePostWizard = () => {
         height={56}
         className="rounded-full"
       />
-      <div className="">
+      <div className="flex w-full items-center justify-between">
         <input
           type="text"
           placeholder="Type some emojis here!"
@@ -51,10 +58,20 @@ const CreatePostWizard = () => {
           value={formInput}
           onChange={(e) => setFormInput(e.target.value)}
           disabled={isPosting}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (formInput !== "") mutate({ content: formInput });
+            }
+          }}
         />
-        {formInput.length > 0 && (
-          <button onClick={() => mutate({ content: formInput })}>Post</button>
-        )}
+        {/* {isPosting && <LoadingSpinner />} */}
+        {formInput.length > 0 &&
+          (isPosting ? (
+            <LoadingSpinner size={20} />
+          ) : (
+            <button onClick={() => mutate({ content: formInput })}>Post</button>
+          ))}
       </div>
     </div>
   );
