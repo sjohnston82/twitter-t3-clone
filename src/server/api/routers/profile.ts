@@ -9,7 +9,6 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 
-
 const filterUserForClient = (user: User) => {
   return {
     id: user.id,
@@ -18,17 +17,14 @@ const filterUserForClient = (user: User) => {
   };
 };
 
-
-
 export const postsRouter = createTRPCRouter({
-  findUser: publicProcedure.input(z.object({
-    username: z.string()
-  })).query(async({ctx: {prisma}, input: {username}}) => {
-    const foundUser = await prisma.post.findUnique({
-      where: {
-        username: username
-      }
-    })
-  })
-  
+  // findUser: publicProcedure.input(z.object({
+  //   username: z.string()
+  // })).query(async({ctx: {prisma}, input: {username}}) => {
+  //   const foundUser = await prisma.post.findUnique({
+  //     where: {
+  //       username: username
+  //     }
+  //   })
+  // })
 });
