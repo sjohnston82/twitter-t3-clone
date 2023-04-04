@@ -1,4 +1,4 @@
-import type { User } from "@clerk/nextjs/dist/api";
+
 import { clerkClient } from "@clerk/nextjs/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -11,13 +11,8 @@ import {
 import { Ratelimit } from "@upstash/ratelimit"; // for deno: see above
 import { Redis } from "@upstash/redis";
 
-const filterUserForClient = (user: User) => {
-  return {
-    id: user.id,
-    username: user.username,
-    profilePicture: user.profileImageUrl,
-  };
-};
+import { filterUserForClient } from "~/server/helpers/filterUserForClient";
+
 
 // Create a new ratelimiter, that allows 3 requests per 1 minute
 const ratelimit = new Ratelimit({
@@ -88,4 +83,22 @@ export const postsRouter = createTRPCRouter({
         },
       });
     }),
+
+  // getPostsByUsername: publicProcedure.input(z.object({username: z.string()})).query(async ({ ctx: { prisma, input}}) => {
+  //   const [user] = await clerkClient.users.getUserList({
+  //       username: [input.username],
+  //     });
+
+  //     if (!user)
+  //       throw new TRPCError({
+  //         code: "BAD_REQUEST",
+  //         message: "User not found.",
+  //       });
+    
+  //   const posts = await prisma.post.findMany({
+  //     where: {
+  //       authorId
+  //     }
+  //   })
+  // })
 });
